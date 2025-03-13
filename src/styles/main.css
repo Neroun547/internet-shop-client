@@ -1,0 +1,39 @@
+a {
+    text-decoration: none;
+    color: #000;
+}
+
+.font-size-12 {
+    font-size: 12px;
+}
+
+.font-size-20 {
+    font-size: 20px;
+}
+
+.w-90 {
+    width: 90% !important;
+}
+
+.w-50 {
+    width: 50% !important;
+}
+
+.mt-50px {
+    margin-top: 50px !important;
+}
+
+.height-50px {
+    height: 50px !important;
+}
+
+.wrapper__products {
+    display: block;
+    width: 90%;
+    margin: 0 auto;
+    margin-top: 50px;
+}
+
+.observer {
+    height: 10px;
+}
