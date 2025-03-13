@@ -16,7 +16,7 @@
           <v-img
             height="200px"
             :src="api_url + '/images/' + product.file_name"
-            cover
+            style="object-fit: contain !important;"
           />
 
           <v-card-title class="text-center">
