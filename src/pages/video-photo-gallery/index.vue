@@ -15,7 +15,7 @@
       >
         <v-card>
           <v-img v-if="!item.previewFileVideo" :src="api_url + 'gallery/' + item.previewFile" style="max-height: 500px;"></v-img>
-          <video preload="metadata" controls v-if="item.previewFileVideo" style="max-height: 500px; max-width: 300px;">
+          <video preload="metadata" controls v-if="item.previewFileVideo" :type="item.mimeType" style="max-height: 500px; max-width: 300px;">
             <source :src="api_url + 'gallery/' + item.previewFile">
           </video>
           <v-card-title>{{ item.name }}</v-card-title>
