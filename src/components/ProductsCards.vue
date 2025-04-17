@@ -10,7 +10,7 @@
     >
       <v-card
         max-width="344"
-        class="bg-grey-lighten-5 mx-auto"
+        class="bg-grey-lighten-5 mx-auto product-card"
       >
         <RouterLink :to="'/products/' + product.id">
           <v-img
@@ -187,3 +187,11 @@ export default {
   }
 }
 </script>
+<style>
+  .product-card {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    justify-content: space-between !important;
+  }
+</style>
