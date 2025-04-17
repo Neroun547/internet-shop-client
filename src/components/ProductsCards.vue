@@ -19,7 +19,7 @@
             style="object-fit: contain !important;"
           />
 
-          <v-card-title class="text-center">
+          <v-card-title class="text-center text-wrap">
             {{ product.name }}
           </v-card-title>
 

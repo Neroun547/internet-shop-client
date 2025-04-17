@@ -24,7 +24,7 @@
         </v-carousel-item>
       </v-carousel>
     </div>
-    <v-card-title>{{product.name}}</v-card-title>
+    <v-card-title class="text-wrap" >{{product.name}}</v-card-title>
     <v-card-title>{{product.price}}грн</v-card-title>
     <v-card-subtitle v-if="product.available" class="text-green mt-2 mb-2">
       Є в наявності

@@ -6,10 +6,10 @@
   <Spinner v-if="loading" />
   <div class="wrapper__articles" v-if="!loading">
     <v-card v-for="article in articles" :key="article.id" class="mt-5 mb-5">
-      <v-card-title>{{article.name}}</v-card-title>
-      <v-card-subtitle class="mt-2">Тема: {{article.theme}}</v-card-subtitle>
-      <v-card-subtitle class="mt-2">Дата: {{article.created_at}}</v-card-subtitle>
-      <v-card-subtitle class="mt-2">Автори: {{article.authors}}</v-card-subtitle>
+      <v-card-title class="text-wrap">{{article.name}}</v-card-title>
+      <v-card-subtitle class="mt-2 text-wrap">Тема: {{article.theme}}</v-card-subtitle>
+      <v-card-subtitle class="mt-2 text-wrap">Дата: {{article.created_at}}</v-card-subtitle>
+      <v-card-subtitle class="mt-2 text-wrap">Автори: {{article.authors}}</v-card-subtitle>
       <v-card-actions>
         <v-spacer></v-spacer>
         <RouterLink :to="'/articles/' + article.filename" class="text-yellow-accent-4">Читати</RouterLink>

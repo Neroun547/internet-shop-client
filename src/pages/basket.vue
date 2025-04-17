@@ -42,10 +42,10 @@
     <span class="d-block font-weight-bold font-size-20 ml-5 mt-5 basket-text">Загальна сума: {{fullPrice}}</span>
     <span class="d-block font-size-20 ml-5 mt-5 font-weight-bold mt-50px text-center basket-text">Вкажіть як з вами зв'язатися</span>
     <form class="w-90 d-block ma-auto mt-5">
-      <v-text-field v-model="firstName" placeholder="Ваше ім'я" :rules="rules" class="basket-text"/>
-      <v-text-field v-model="lastName" placeholder="Ваше прізвище" :rules="rules" class="basket-text"/>
-      <v-text-field placeholder="Телеграм, WhatsApp, Viber, мобільний номер і т.д" v-model="contactInfo" :rules="rules" class="basket-text"/>
-      <v-text-field placeholder="Примітка" v-model="remark" class="basket-text"/>
+      <v-text-field v-model="firstName" placeholder="Ваше ім'я" :rules="rules" class="basket-text" variant="outlined" />
+      <v-text-field v-model="lastName" placeholder="Ваше прізвище" :rules="rules" class="basket-text" variant="outlined" />
+      <v-text-field placeholder="Телеграм, WhatsApp, Viber, мобільний номер і т.д" v-model="contactInfo" :rules="rules" class="basket-text" variant="outlined" />
+      <v-text-field placeholder="Примітка" v-model="remark" class="basket-text" variant="outlined" />
       <v-btn class="bg-green d-block w-75 d-block mt-3 ma-auto height-50px basket-text mb-5" @click="buy">Замовити зараз</v-btn>
     </form>
   </div>

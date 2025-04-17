@@ -70,7 +70,7 @@
             />
           </div>
           <h3>Статус:</h3>
-          <v-select :items="productsFiltersSelectStatus" v-model="productsFilters.status" class="mt-5"></v-select>
+          <v-select variant="outlined" :items="productsFiltersSelectStatus" v-model="productsFilters.status" class="mt-5"></v-select>
           <v-btn class="bg-green mt-5 font-size-12 d-block" @click="setFilters">Застосувати</v-btn>
         </v-form>
       </v-list-item>
