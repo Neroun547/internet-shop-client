@@ -97,7 +97,8 @@ export default {
       productsState: [],
       loadMoreProductsOptions: {
         take: 16,
-        skip: 16
+        skip: 16,
+        alreadyAllProduct: false
       }
     }
   },
@@ -120,6 +121,7 @@ export default {
       this.productsState[index] = { ...this.productsState[index], inBasket: true };
     },
     async loadMoreProducts() {
+      if(this.loadMoreProductsOptions.alreadyAllProduct) return;
       if(this.rubricId !== 0 && !this.rubricId) return;
 
       const basket = localStorage.getItem("basket");
@@ -150,6 +152,11 @@ export default {
         parsedBasket = JSON.parse(basket);
         const data = (await Api.get(url)).data;
 
+        if(!data || !data.length) {
+          this.loadMoreProductsOptions.alreadyAllProduct = true;
+
+          return;
+        }
         this.productsState.push(...data.map(product => {
           if(parsedBasket.find(el => el.id === product.id)) {
             return { ...product, inBasket: true };
@@ -158,6 +165,12 @@ export default {
         }))
       } else {
         const data = (await Api.get(url)).data;
+
+        if(!data || !data.length) {
+          this.loadMoreProductsOptions.alreadyAllProduct = true;
+
+          return;
+        }
         this.productsState.push(...data);
       }
       this.loadMoreProductsOptions.skip += 16;
@@ -183,6 +196,7 @@ export default {
     products: function (value) {
       this.productsState = value;
       this.loadMoreProductsOptions.skip = 16;
+      this.loadMoreProductsOptions.alreadyAllProduct = false;
     }
   }
 }
