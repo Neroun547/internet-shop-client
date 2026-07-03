@@ -1,66 +1,55 @@
 <template>
-  <NavBar
-    :hide-search-bar="true"
-    :hide-filters="true"
-  />
+  <NavBar :hide-search-bar="true" :hide-filters="true" />
   <div class="wrapper__publication">
     <v-card>
       <v-carousel v-if="files && files.length">
         <v-carousel-item v-for="file in files" v-bind:key="file.id" cover>
-          <v-img v-if="file.type === 'image'" :src="api_url + 'gallery/' + file.filename"/>
+          <v-img
+            v-if="file.type === 'image'"
+            :src="API_URL + 'gallery/' + file.filename"
+          />
           <video v-if="file.type === 'video'" preload="metadata" controls>
-            <source :src="api_url + 'gallery/' + file.filename">
+            <source :src="API_URL + 'gallery/' + file.filename" />
           </video>
         </v-carousel-item>
       </v-carousel>
-      <v-card-title>{{name}}</v-card-title>
-      <v-card-subtitle>{{theme}}</v-card-subtitle>
-      <v-card-text>{{description}}</v-card-text>
+      <v-card-title>{{ name }}</v-card-title>
+      <v-card-subtitle>{{ theme }}</v-card-subtitle>
+      <v-card-text>{{ description }}</v-card-text>
     </v-card>
   </div>
 </template>
-<script>
-  import Api from "@/lib/api.js";
-  import NavBar from "@/components/NavBar.vue";
-  import {API_URL} from "@/constants.js";
+<script setup>
+import Api from "@/lib/api.js";
+import NavBar from "@/components/NavBar.vue";
+import { API_URL } from "@/constants.js";
+import { useRoute } from "vue-router";
 
-  export default {
-    components: {NavBar},
-    data() {
-      return {
-        name: "",
-        theme: "",
-        description: "",
-        files: []
-      }
-    },
-    mounted() {
-      this.getPublication();
-    },
-    methods: {
-      async getPublication() {
-        const data = (await Api.get("/video-photo-gallery/" + this.$route.params.id)).data;
+const route = useRoute();
 
-        this.name = data.name;
-        this.description = data.description;
-        this.theme = data.theme;
-        this.files = data.files;
-      }
-    },
-    computed: {
-      api_url: {
-        get() {
-          return API_URL;
-        }
-      }
-    }
-  }
+const name = ref("");
+const theme = ref("");
+const description = ref("");
+const files = ref([]);
+
+async function getPublication() {
+  const data = (await Api.get("/video-photo-gallery/" + route.params.id)).data;
+
+  name.value = data.name;
+  description.value = data.description;
+  theme.value = data.theme;
+  files.value = data.files;
+}
+
+onMounted(() => {
+  getPublication();
+});
 </script>
 <style scoped>
-  .wrapper__publication {
-    width: 60%;
-    display: block;
-    margin: 0 auto;
-    margin-top: 50px;
-  }
+.wrapper__publication {
+  width: 60%;
+  display: block;
+  margin: 0 auto;
+  margin-top: 50px;
+}
 </style>

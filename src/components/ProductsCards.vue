@@ -8,15 +8,12 @@
       md="6"
       lg="3"
     >
-      <v-card
-        max-width="344"
-        class="bg-grey-lighten-5 mx-auto product-card"
-      >
+      <v-card max-width="344" class="bg-grey-lighten-5 mx-auto product-card">
         <RouterLink :to="'/products/' + product.id">
           <v-img
             height="200px"
-            :src="api_url + '/images/' + product.file_name"
-            style="object-fit: contain !important;"
+            :src="API_URL + '/images/' + product.file_name"
+            style="object-fit: contain !important"
           />
 
           <v-card-title class="text-center text-wrap">
@@ -27,14 +24,20 @@
             {{ product.type }}
           </v-card-subtitle>
 
-          <v-card-subtitle v-if="product.available" class="text-green text-center mt-2 mb-2">
+          <v-card-subtitle
+            v-if="product.available"
+            class="text-green text-center mt-2 mb-2"
+          >
             Є в наявності
           </v-card-subtitle>
-          <v-card-subtitle v-if="!product.available" class="text-red text-center mt-2 mb-2">
+          <v-card-subtitle
+            v-if="!product.available"
+            class="text-red text-center mt-2 mb-2"
+          >
             Немає в наявності
           </v-card-subtitle>
-          <v-card-title class="text-center ">
-            {{product.price}}грн
+          <v-card-title class="text-center">
+            {{ product.price }}грн
           </v-card-title>
           <v-card-subtitle v-if="!product.partner" class="text-center">
             Товар від Zolotar
@@ -51,10 +54,7 @@
             @click="addProductToBasket(product)"
           >
             Додати в кошик
-            <v-icon
-              icon="mdi-basket"
-              class="ml-2"
-            />
+            <v-icon icon="mdi-basket" class="ml-2" />
           </v-btn>
           <v-btn
             v-if="product.inBasket"
@@ -67,145 +67,127 @@
       </v-card>
     </v-col>
   </v-row>
-  <div
-    ref="sentinel"
-    class="observer"
-  />
+  <div ref="sentinel" class="observer" />
 </template>
-<script>
-import {API_URL} from "@/constants.js";
+<script setup>
+import { API_URL } from "@/constants.js";
 import Api from "@/lib/api.js";
 
-export default {
-  props: {
-    products: Array,
-    rubricId: {
-      required: false,
-      type: Number
-    },
-    typeId: {
-      required: false,
-      type: Number || String
-    },
-    filters: {
-      required: false,
-      type: Object
-    }
-  },
-  data() {
-    return {
-      productsState: [],
-      loadMoreProductsOptions: {
-        take: 16,
-        skip: 16,
-        alreadyAllProduct: false
-      }
-    }
-  },
-  mounted() {
-    this.createObserver();
-    this.productsState = this.products;
-  },
-  methods: {
-    addProductToBasket(product) {
-      const basket = localStorage.getItem("basket");
+const sentinelRef = useTemplateRef("sentinel");
 
-      if(basket) {
-        const newBasket = JSON.parse(basket);
-        newBasket.push(product);
-        localStorage.setItem("basket", JSON.stringify(newBasket));
-      } else {
-        localStorage.setItem("basket", JSON.stringify([product]));
-      }
-      const index = this.productsState.findIndex(el => el.id === product.id);
-      this.productsState[index] = { ...this.productsState[index], inBasket: true };
-    },
-    async loadMoreProducts() {
-      if(this.loadMoreProductsOptions.alreadyAllProduct) return;
-      if(this.rubricId !== 0 && !this.rubricId) return;
+const props = defineProps(["products", "rubricId", "typeId", "filters"]);
 
-      const basket = localStorage.getItem("basket");
-      let parsedBasket;
-      let url = `/products/load-more?skip=${this.loadMoreProductsOptions.skip}&take=${this.loadMoreProductsOptions.take}`;
+const productsState = ref([]);
+const loadMoreProductsOptions = ref({
+  take: 16,
+  skip: 16,
+  alreadyAllProduct: false,
+});
 
-      if(this.rubricId) {
-        url += "&rubricId=" + this.rubricId;
-      }
-      if(this.typeId) {
-        url += "&type=" + this.typeId;
-      }
-      if(this.filters && Object.keys(this.filters).length) {
-        if(this.filters.status) {
-          url += "&available=" + this.filters.status;
-        }
-        if(this.filters.priceFrom) {
-          url += "&priceFrom=" + this.filters.priceFrom;
-        }
-        if(this.filters.priceTo) {
-          url += "&priceTo=" + this.filters.priceTo;
-        }
-        if(this.filters.name) {
-          url += "&name=" + this.filters.name;
-        }
-      }
-      if(basket) {
-        parsedBasket = JSON.parse(basket);
-        const data = (await Api.get(url)).data;
+function addProductToBasket(product) {
+  const basket = localStorage.getItem("basket");
 
-        if(!data || !data.length) {
-          this.loadMoreProductsOptions.alreadyAllProduct = true;
-
-          return;
-        }
-        this.productsState.push(...data.map(product => {
-          if(parsedBasket.find(el => el.id === product.id)) {
-            return { ...product, inBasket: true };
-          }
-          return { ...product, inBasket: false };
-        }))
-      } else {
-        const data = (await Api.get(url)).data;
-
-        if(!data || !data.length) {
-          this.loadMoreProductsOptions.alreadyAllProduct = true;
-
-          return;
-        }
-        this.productsState.push(...data);
-      }
-      this.loadMoreProductsOptions.skip += 16;
-    },
-    createObserver() {
-      const options = { threshold: 1.0 };
-      const observer = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting) {
-          this.loadMoreProducts();
-        }
-      }, options);
-      observer.observe(this.$refs.sentinel);
-    },
-  },
-  computed: {
-    api_url: {
-      get() {
-        return API_URL;
-      }
-    }
-  },
-  watch: {
-    products: function (value) {
-      this.productsState = value;
-      this.loadMoreProductsOptions.skip = 16;
-      this.loadMoreProductsOptions.alreadyAllProduct = false;
-    }
+  if (basket) {
+    const newBasket = JSON.parse(basket);
+    newBasket.push(product);
+    localStorage.setItem("basket", JSON.stringify(newBasket));
+  } else {
+    localStorage.setItem("basket", JSON.stringify([product]));
   }
+  const index = productsState.value.findIndex((el) => el.id === product.id);
+  productsState.value[index] = {
+    ...productsState.value[index],
+    inBasket: true,
+  };
 }
-</script>
-<style>
-  .product-card {
-    display: flex !important;
-    flex-direction: column !important;
-    height: 100% !important;
-    justify-content: space-between !important;
+
+async function loadMoreProducts() {
+  if (loadMoreProductsOptions.value.alreadyAllProduct) return;
+  if (props.rubricId !== 0 && !props.rubricId) return;
+
+  const basket = localStorage.getItem("basket");
+  let parsedBasket;
+  let url = `/products/load-more?skip=${loadMoreProductsOptions.value.skip}&take=${loadMoreProductsOptions.value.take}`;
+
+  if (props.rubricId) {
+    url += "&rubricId=" + props.rubricId;
   }
+  if (props.typeId) {
+    url += "&type=" + props.typeId;
+  }
+  if (props.filters && Object.keys(props.filters).length) {
+    if (props.filters.status) {
+      url += "&available=" + props.filters.status;
+    }
+    if (props.filters.priceFrom) {
+      url += "&priceFrom=" + props.filters.priceFrom;
+    }
+    if (props.filters.priceTo) {
+      url += "&priceTo=" + props.filters.priceTo;
+    }
+    if (props.filters.name) {
+      url += "&name=" + props.filters.name;
+    }
+  }
+  if (basket) {
+    parsedBasket = JSON.parse(basket);
+    const data = (await Api.get(url)).data;
+
+    if (!data || !data.length) {
+      loadMoreProductsOptions.value.alreadyAllProduct = true;
+
+      return;
+    }
+    productsState.value.push(
+      ...data.map((product) => {
+        if (parsedBasket.find((el) => el.id === product.id)) {
+          return { ...product, inBasket: true };
+        }
+        return { ...product, inBasket: false };
+      }),
+    );
+  } else {
+    const data = (await Api.get(url)).data;
+
+    if (!data || !data.length) {
+      loadMoreProductsOptions.value.alreadyAllProduct = true;
+
+      return;
+    }
+    productsState.value.push(...data);
+  }
+  loadMoreProductsOptions.value.skip += 16;
+}
+
+function createObserver() {
+  const options = { threshold: 1.0 };
+  const observer = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting) {
+      loadMoreProducts();
+    }
+  }, options);
+  observer.observe(sentinelRef.value);
+}
+
+onMounted(() => {
+  createObserver();
+  productsState.value = props.products;
+});
+
+watch(
+  () => props.products,
+  () => {
+    productsState.value = props.products;
+    loadMoreProductsOptions.value.skip = 16;
+    loadMoreProductsOptions.value.alreadyAllProduct = false;
+  },
+);
+</script>
+<style scoped>
+.product-card {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  justify-content: space-between !important;
+}
 </style>
