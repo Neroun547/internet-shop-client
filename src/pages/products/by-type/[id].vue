@@ -7,7 +7,7 @@
     :rubric-id="rubricIdState"
     :type-id="typeId"
   />
-  <Spinner v-if="loading"/>
+  <Spinner v-if="loading" />
   <div class="wrapper__products" v-if="!loading">
     <div v-if="!products.length">
       <h2 class="text-center">За вашим запитом товарів не знайдено :(</h2>
@@ -20,88 +20,86 @@
     />
   </div>
 </template>
-<script>
+<script setup>
 import NavBar from "@/components/NavBar.vue";
 import ProductsCards from "@/components/ProductsCards.vue";
 import Api from "@/lib/api.js";
 import Spinner from "@/components/Spinner.vue";
-import {isProductsInBasket} from "@/utils/is-products-in-basket.js";
+import { isProductsInBasket } from "@/utils/is-products-in-basket.js";
+import { watch } from "vue";
+import { useRoute } from "vue-router";
 
-export default {
-  components: {Spinner, NavBar, ProductsCards },
-  created() {
-    this.$watch(
-      () => this.$route.params.id,
-      (newId) => {
-        this.getProductsByTypeId(newId);
-        this.rubricIdState = this.$route.query["rubricId"];
-        this.typeId = newId;
-      }
-    )
-  },
-  data() {
-    return {
-      products: [],
-      minPrice: 0,
-      maxPrice: 0,
-      rubricIdState: null,
-      typeId: null,
-      filters: null,
-      loading: true
-    }
-  },
-  methods: {
-    async getProductsByTypeId(typeId) {
-      const data = (await Api.get(`/products/by-type/${typeId}`)).data;
+const route = useRoute();
 
-      this.minPrice = data.minPrice;
-      this.maxPrice = data.maxPrice;
-      this.products = isProductsInBasket(data.products);
-    },
-    async changeFilters(data) {
-      let url = `/products/by-filters/`;
+const products = ref([]);
+const minPrice = ref(0);
+const maxPrice = ref(0);
+const rubricIdState = ref(null);
+const typeId = ref(null);
+const filters = ref(null);
+const loading = ref(true);
 
-      this.filters = data;
+async function getProductsByTypeId(typeId) {
+  const data = (await Api.get(`/products/by-type/${typeId}`)).data;
 
-      if(data.status) {
-        url += "?available=" + data.status;
-      }
-      if(data.priceFrom) {
-        url += "&priceFrom=" + data.priceFrom;
-      }
-      if(data.priceTo) {
-        url += "&priceTo=" + data.priceTo;
-      }
-      url += "&rubricId=" + this.rubricIdState;
-      url += "&type=" + this.typeId;
+  minPrice.value = data.minPrice;
+  maxPrice.value = data.maxPrice;
+  products.value = isProductsInBasket(data.products);
+}
 
-      this.products = isProductsInBasket((await Api.get(url)).data);
-    },
-    async findProductByName(findOptions) {
-      const data = (await Api.get("/products/by-name/?name=" + findOptions.name)).data;
+async function changeFilters(data) {
+  let url = `/products/by-filters/`;
 
-      this.products = isProductsInBasket(data.products);
-      this.minPrice = data.minPrice;
-      this.maxPrice = data.maxPrice;
+  filters.value = data;
 
-      if(!this.filters) {
-        this.filters = { name: findOptions.name };
-      } else {
-        this.filters.name = findOptions.name;
-      }
-    },
+  if (data.status) {
+    url += "?available=" + data.status;
+  }
+  if (data.priceFrom) {
+    url += "&priceFrom=" + data.priceFrom;
+  }
+  if (data.priceTo) {
+    url += "&priceTo=" + data.priceTo;
+  }
+  url += "&rubricId=" + rubricIdState.value;
+  url += "&type=" + typeId.value;
 
-  },
-  async mounted() {
-    try {
-      this.rubricIdState = this.$route.query["rubricId"];
-      this.typeId = this.$route.params.id;
-      await this.getProductsByTypeId(this.$route.params.id);
+  products.value = isProductsInBasket((await Api.get(url)).data);
+}
+async function findProductByName(findOptions) {
+  const data = (await Api.get("/products/by-name/?name=" + findOptions.name))
+    .data;
 
-      this.loading = false;
-    } catch {
-      this.loading = false;
-    }
+  products.value = isProductsInBasket(data.products);
+  minPrice.value = data.minPrice;
+  maxPrice.value = data.maxPrice;
+
+  if (!filters.value) {
+    filters.value = { name: findOptions.name };
+  } else {
+    filters.value.name = findOptions.name;
   }
 }
+
+onMounted(async () => {
+  try {
+    rubricIdState.value = route.query["rubricId"];
+    typeId.value = route.params.id;
+
+    await getProductsByTypeId(route.params.id);
+
+    loading.value = false;
+  } catch {
+    loading.value = false;
+  }
+});
+
+watch(
+  () => route.params.id,
+  (newId) => {
+    getProductsByTypeId(newId);
+    rubricIdState.value = route.query["rubricId"];
+    typeId.value = newId;
+  },
+);
 </script>

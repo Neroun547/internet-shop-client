@@ -6,7 +6,7 @@
     v-on:set-filters="changeFilters"
     v-on:find-product="findProductByName"
   />
-  <Spinner v-if="loading"/>
+  <Spinner v-if="loading" />
   <div class="wrapper__products" v-if="!loading">
     <div v-if="!products.length">
       <h2 class="text-center">За вашим запитом товарів не знайдено :(</h2>
@@ -18,82 +18,78 @@
     />
   </div>
 </template>
-<script>
+<script setup>
 import Api from "@/lib/api.js";
 import NavBar from "@/components/NavBar.vue";
 import ProductsCards from "@/components/ProductsCards.vue";
 import Spinner from "@/components/Spinner.vue";
-import {isProductsInBasket} from "@/utils/is-products-in-basket.js";
+import { isProductsInBasket } from "@/utils/is-products-in-basket.js";
 
-export default {
-  components: {Spinner, ProductsCards, NavBar},
-  data() {
-    return {
-      products: [],
-      minPrice: 0,
-      maxPrice: 0,
-      rubricId: null,
-      filters: null,
-      loading: true
-    }
-  },
-  methods: {
-    async getData(rubricId) {
-      const data = (await Api.get("/products/by-rubrics/" + rubricId)).data;
+const route = useRoute();
 
-      this.products = isProductsInBasket(data.products);
-      this.minPrice = data.minPrice;
-      this.maxPrice = data.maxPrice;
-      this.rubricId = rubricId;
-    },
-    async changeFilters(data) {
-      let url = `/products/by-filters/`;
+const products = ref([]);
+const minPrice = ref(0);
+const maxPrice = ref(0);
+const rubricId = ref(null);
+const filters = ref(null);
+const loading = ref(true);
 
-      this.filters = data;
+async function getData(rubricIdArg) {
+  const data = (await Api.get("/products/by-rubrics/" + rubricIdArg)).data;
 
-      if(data.status) {
-        url += "?available=" + data.status;
-      }
-      if(data.priceFrom) {
-        url += "&priceFrom=" + data.priceFrom;
-      }
-      if(data.priceTo) {
-        url += "&priceTo=" + data.priceTo;
-      }
-      url += "&rubricId=" + this.rubricId;
-
-      this.products = isProductsInBasket((await Api.get(url)).data);
-    },
-    async findProductByName(findOptions) {
-      const data = (await Api.get("/products/by-name/?name=" + findOptions.name)).data;
-
-      this.minPrice = data.minPrice;
-      this.maxPrice = data.maxPrice;
-      this.products = isProductsInBasket(data.products);
-
-      if(!this.filters) {
-        this.filters = { name: findOptions.name };
-      } else {
-        this.filters.name = findOptions.name;
-      }
-    },
-  },
-  async mounted() {
-    try {
-      await this.getData(this.$route.params.id);
-
-      this.loading = false;
-    } catch {
-      this.loading = false;
-    }
-  },
-  created() {
-    this.$watch(
-      () => this.$route.params.id,
-      (newId) => {
-        this.getData(newId);
-      }
-    )
-  },
+  products.value = isProductsInBasket(data.products);
+  minPrice.value = data.minPrice;
+  maxPrice.value = data.maxPrice;
+  rubricId.value = rubricIdArg;
 }
+
+async function changeFilters(data) {
+  let url = `/products/by-filters/`;
+
+  filters.value = data;
+
+  if (data.status) {
+    url += "?available=" + data.status;
+  }
+  if (data.priceFrom) {
+    url += "&priceFrom=" + data.priceFrom;
+  }
+  if (data.priceTo) {
+    url += "&priceTo=" + data.priceTo;
+  }
+  url += "&rubricId=" + rubricId.value;
+
+  products.value = isProductsInBasket((await Api.get(url)).data);
+}
+async function findProductByName(findOptions) {
+  const data = (await Api.get("/products/by-name/?name=" + findOptions.name))
+    .data;
+
+  minPrice.value = data.minPrice;
+  maxPrice.value = data.maxPrice;
+  products.value = isProductsInBasket(data.products);
+
+  if (!filters.value) {
+    filters.value = { name: findOptions.name };
+  } else {
+    filters.value.name = findOptions.name;
+  }
+}
+
+onMounted(async () => {
+  try {
+    await getData(route.params.id);
+
+    loading.value = false;
+  } catch {
+    loading.value = false;
+  }
+});
+
+watch(
+  () => route.params.id,
+  () => {
+    getData(route.params.id);
+  },
+);
 </script>
