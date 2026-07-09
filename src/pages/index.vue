@@ -20,7 +20,7 @@ import Api from "@/lib/api.js";
 import ProductsCards from "@/components/ProductsCards.vue";
 import NavBar from "@/components/NavBar.vue";
 import Spinner from "@/components/Spinner.vue";
-import { isProductsInBasket } from "@/utils/is-products-in-basket.js";
+import { isProductsInBasket } from "@/stores/basket";
 
 const products = ref([]);
 const minPrice = ref(0);

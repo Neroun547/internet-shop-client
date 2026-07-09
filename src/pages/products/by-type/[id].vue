@@ -25,7 +25,7 @@ import NavBar from "@/components/NavBar.vue";
 import ProductsCards from "@/components/ProductsCards.vue";
 import Api from "@/lib/api.js";
 import Spinner from "@/components/Spinner.vue";
-import { isProductsInBasket } from "@/utils/is-products-in-basket.js";
+import { isProductsInBasket } from "@/stores/basket";
 import { watch } from "vue";
 import { useRoute } from "vue-router";
 

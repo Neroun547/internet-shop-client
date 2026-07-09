@@ -94,6 +94,11 @@
 <script setup>
 import Api from "@/lib/api.js";
 import NavBar from "@/components/NavBar.vue";
+import {
+  clearBasket,
+  getBasketFromStore,
+  setProductsToBasketStore,
+} from "@/stores/basket";
 
 const rules = [(value) => !!value || "Це поле обов'язкове"];
 
@@ -115,7 +120,7 @@ async function getMaxAndMinPrices() {
 function deleteProductFromBasket(id) {
   products.value = products.value.filter((product) => product.id !== id);
 
-  localStorage.setItem("basket", JSON.stringify(products.value));
+  setProductsToBasketStore(products.value);
 }
 async function buy() {
   if (
@@ -141,7 +146,8 @@ function closeDialog() {
   isDialogActive.value = false;
 
   products.value = [];
-  localStorage.setItem("basket", "");
+
+  clearBasket();
 }
 
 const fullPrice = computed(() =>
@@ -153,10 +159,10 @@ const fullPrice = computed(() =>
 );
 
 onMounted(async () => {
-  const basket = localStorage.getItem("basket");
+  const basket = getBasketFromStore();
 
   if (basket) {
-    products.value = JSON.parse(basket).map((product) => ({
+    products.value = basket.map((product) => ({
       ...product,
       count: 1,
     }));

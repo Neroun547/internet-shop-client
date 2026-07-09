@@ -30,6 +30,7 @@ import NavBar from "@/components/NavBar.vue";
 import Api from "@/lib/api.js";
 import Spinner from "@/components/Spinner.vue";
 import { useTemplateRef } from "vue";
+import { isAlreadyAllLoaded } from "@/utils/is-already-all-loaded";
 
 const sentinelRef = useTemplateRef("sentinel");
 
@@ -38,22 +39,33 @@ const loading = ref(true);
 const loadMoreOptions = ref({
   take: 16,
   skip: 16,
+  alreadyAllLoaded: false,
 });
 
 async function getArticles() {
-  articles.value = (
-    await Api.get(`/articles/?take=${loadMoreOptions.value.take}&skip=0`)
-  ).data;
+  const apiResponse = await Api.get(
+    `/articles/?take=${loadMoreOptions.value.take}&skip=0`,
+  );
+
+  if (apiResponse && Array.isArray(apiResponse.data)) {
+    articles.value = apiResponse.data;
+  }
 }
 async function loadMoreArticles() {
-  const data = (
-    await Api.get(
-      `/articles/?take=${loadMoreOptions.value.take}&skip=${loadMoreOptions.value.skip}`,
-    )
-  ).data;
+  if (loadMoreOptions.value.alreadyAllLoaded) return;
 
-  articles.value.push(...data);
+  const apiResponse = await Api.get(
+    `/articles/?take=${loadMoreOptions.value.take}&skip=${loadMoreOptions.value.skip}`,
+  );
 
+  loadMoreOptions.value.alreadyAllLoaded = isAlreadyAllLoaded(
+    apiResponse,
+    loadMoreOptions.value.take,
+  );
+
+  if (apiResponse && Array.isArray(apiResponse.data)) {
+    articles.value.push(...apiResponse.data);
+  }
   loadMoreOptions.value.skip += 16;
 }
 function createObserver() {

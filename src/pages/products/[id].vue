@@ -49,11 +49,12 @@
   </v-card>
 </template>
 <script setup>
-import {API_URL} from "@/constants.js";
+import { API_URL } from "@/constants.js";
 import Api from "@/lib/api.js";
 import NavBar from "@/components/NavBar.vue";
 import Spinner from "@/components/Spinner.vue";
 import { useRoute } from "vue-router";
+import { addProductToBasketStore, findProductInBasket } from "@/stores/basket";
 
 const route = useRoute();
 
@@ -69,39 +70,27 @@ async function getMaxAndMinPrices() {
   maxPrice.value = (await Api.get("/products/prices/max")).data.value;
 }
 function addToBasket() {
-    const basket = localStorage.getItem("basket");
+  addProductToBasketStore(product.value);
 
-    if(basket) {
-      const parsedBasket = JSON.parse(basket);
-
-      parsedBasket.push(product.value);
-      localStorage.setItem("basket", JSON.stringify(parsedBasket));
-    } else {
-      localStorage.setItem("basket", JSON.stringify([product.value]));
-    }
-    isProductInBasket();
+  isProductInBasket();
 }
 
 function isProductInBasket() {
-  const basket = localStorage.getItem("basket");
-
-  if(!basket) return false;
-
-  const parsedBasket = JSON.parse(basket);
-
-  isProductInBasketState.value = parsedBasket.findIndex(el => el.id === product.value.id) !== -1;
+  isProductInBasketState.value = findProductInBasket(product.value.id)
+    ? true
+    : false;
 }
 
 onMounted(async () => {
-    try {
-      product.value = (await Api.get("/products/" + route.params.id)).data;
-      
-      isProductInBasket();
-      await getMaxAndMinPrices();
-      
-      loading.value = false;
-    } catch(e) {
-      loading.value = false;
-    }
+  try {
+    product.value = (await Api.get("/products/" + route.params.id)).data;
+
+    isProductInBasket();
+    await getMaxAndMinPrices();
+
+    loading.value = false;
+  } catch (e) {
+    loading.value = false;
+  }
 });
 </script>

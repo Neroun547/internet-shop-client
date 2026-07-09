@@ -44,6 +44,7 @@
 import Api from "@/lib/api.js";
 import NavBar from "@/components/NavBar.vue";
 import { API_URL } from "@/constants.js";
+import { isAlreadyAllLoaded } from "@/utils/is-already-all-loaded";
 
 const sentinelRef = useTemplateRef("sentinel");
 
@@ -51,19 +52,29 @@ const publications = ref([]);
 const loadMoreOptions = ref({
   take: 12,
   skip: 12,
+  alreadyAllLoaded: false,
 });
 
 async function getPublications() {
-  publications.value = (await Api.get("/video-photo-gallery")).data;
+  const apiResponse = await Api.get("/video-photo-gallery");
+
+  if (apiResponse && Array.isArray(apiResponse.data)) {
+    publications.value = apiResponse.data;
+  }
 }
 
 async function loadMorePublications() {
-  publications.value.push(
-    ...(
-      await Api.get(
-        `/video-photo-gallery/load-more/?take=${loadMoreOptions.value.take}&skip=${loadMoreOptions.value.skip}`,
-      )
-    ).data,
+  if (loadMoreOptions.value.alreadyAllLoaded) return;
+
+  const apiResponse = await Api.get(
+    `/video-photo-gallery/load-more/?take=${loadMoreOptions.value.take}&skip=${loadMoreOptions.value.skip}`,
+  );
+  if (apiResponse && Array.isArray(apiResponse.data)) {
+    publications.value.push(...apiResponse.data);
+  }
+  loadMoreOptions.value.alreadyAllLoaded = isAlreadyAllLoaded(
+    apiResponse,
+    loadMoreOptions.value.take,
   );
 
   loadMoreOptions.value.skip += 12;

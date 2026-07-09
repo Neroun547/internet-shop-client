@@ -72,6 +72,8 @@
 <script setup>
 import { API_URL } from "@/constants.js";
 import Api from "@/lib/api.js";
+import { isAlreadyAllLoaded } from "@/utils/is-already-all-loaded";
+import { addProductToBasketStore, getBasketFromStore } from "@/stores/basket";
 
 const sentinelRef = useTemplateRef("sentinel");
 
@@ -81,19 +83,12 @@ const productsState = ref([]);
 const loadMoreProductsOptions = ref({
   take: 16,
   skip: 16,
-  alreadyAllProduct: false,
+  alreadyAllLoaded: false,
 });
 
 function addProductToBasket(product) {
-  const basket = localStorage.getItem("basket");
+  addProductToBasketStore(product);
 
-  if (basket) {
-    const newBasket = JSON.parse(basket);
-    newBasket.push(product);
-    localStorage.setItem("basket", JSON.stringify(newBasket));
-  } else {
-    localStorage.setItem("basket", JSON.stringify([product]));
-  }
   const index = productsState.value.findIndex((el) => el.id === product.id);
   productsState.value[index] = {
     ...productsState.value[index],
@@ -102,11 +97,11 @@ function addProductToBasket(product) {
 }
 
 async function loadMoreProducts() {
-  if (loadMoreProductsOptions.value.alreadyAllProduct) return;
+  if (loadMoreProductsOptions.value.alreadyAllLoaded) return;
   if (props.rubricId !== 0 && !props.rubricId) return;
 
-  const basket = localStorage.getItem("basket");
-  let parsedBasket;
+  const basket = getBasketFromStore();
+
   let url = `/products/load-more?skip=${loadMoreProductsOptions.value.skip}&take=${loadMoreProductsOptions.value.take}`;
 
   if (props.rubricId) {
@@ -130,31 +125,34 @@ async function loadMoreProducts() {
     }
   }
   if (basket) {
-    parsedBasket = JSON.parse(basket);
-    const data = (await Api.get(url)).data;
+    const apiResponse = await Api.get(url);
 
-    if (!data || !data.length) {
-      loadMoreProductsOptions.value.alreadyAllProduct = true;
-
-      return;
-    }
-    productsState.value.push(
-      ...data.map((product) => {
-        if (parsedBasket.find((el) => el.id === product.id)) {
-          return { ...product, inBasket: true };
-        }
-        return { ...product, inBasket: false };
-      }),
+    loadMoreProductsOptions.value.alreadyAllLoaded = isAlreadyAllLoaded(
+      apiResponse,
+      loadMoreProductsOptions.value.take,
     );
-  } else {
-    const data = (await Api.get(url)).data;
 
-    if (!data || !data.length) {
-      loadMoreProductsOptions.value.alreadyAllProduct = true;
-
-      return;
+    if (apiResponse && Array.isArray(apiResponse.data)) {
+      productsState.value.push(
+        ...apiResponse.data.map((product) => {
+          if (basket.find((el) => el.id === product.id)) {
+            return { ...product, inBasket: true };
+          }
+          return { ...product, inBasket: false };
+        }),
+      );
     }
-    productsState.value.push(...data);
+  } else {
+    const apiResponse = await Api.get(url);
+
+    loadMoreProductsOptions.value.alreadyAllLoaded = isAlreadyAllLoaded(
+      apiResponse,
+      loadMoreProductsOptions.value.take,
+    );
+
+    if (apiResponse && Array.isArray(apiResponse.data)) {
+      productsState.value.push(...apiResponse.data);
+    }
   }
   loadMoreProductsOptions.value.skip += 16;
 }
@@ -179,7 +177,7 @@ watch(
   () => {
     productsState.value = props.products;
     loadMoreProductsOptions.value.skip = 16;
-    loadMoreProductsOptions.value.alreadyAllProduct = false;
+    loadMoreProductsOptions.value.alreadyAllLoaded = false;
   },
 );
 </script>
